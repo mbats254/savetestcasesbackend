@@ -105,6 +105,40 @@ def download_testcases_excel(request):
 
     # Save the workbook to the response
     workbook.save(response)
-    return response    
+    return response   
+
+
+def download_testcases_json(request):
+    # Retrieve all records from the TestCase model
+    test_cases = TestCase.objects.all()
+
+    # Prepare data in JSON format with specified fields
+    data = []
+    for test_case in test_cases:
+        data.append({
+            "id": test_case.test_case_id,  # Assuming the model has this field
+            "__EMPTY": "",  # Placeholder field, as per your structure
+            "Test Case": test_case.test_case,
+            "Pre-condition": test_case.pre_condition,
+            "Test Steps": test_case.test_steps,
+            "Test Data": test_case.test_data,
+            "Expected Result": test_case.expected_result,
+            "Actual Result": "",  # Placeholder if not provided by the model
+            "Device": "",         # Placeholder if not provided by the model
+            "Pass/Fail": test_case.pass_fail,
+            "Bug(Status)": ""     # Placeholder if not provided by the model
+        })
+
+    # Convert the data to JSON format
+    json_data = json.dumps(data, indent=4)
+
+    # Set the response with the correct content type and filename for download
+    response = HttpResponse(
+        json_data,
+        content_type="application/json"
+    )
+    response["Content-Disposition"] = 'attachment; filename="data_with_ids.json"'
+
+    return response
 
     
