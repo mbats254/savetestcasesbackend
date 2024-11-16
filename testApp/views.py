@@ -102,7 +102,9 @@ def download_testcases_excel_by_category(request):
             sheet[f"E{row_num}"] = test_case.test_steps
             sheet[f"F{row_num}"] = test_case.test_data
             sheet[f"G{row_num}"] = test_case.expected_result
-            sheet[f"H{row_num}"] = test_case.pass_fail
+            
+            # Fix for the pass_fail field, setting a default value if it's None or empty
+            sheet[f"H{row_num}"] = test_case.pass_fail if test_case.pass_fail else "Not Set"
 
     # Remove the default sheet created by openpyxl if no data was added to it
     if "Sheet" in workbook.sheetnames and len(workbook.sheetnames) > 1:
@@ -116,7 +118,7 @@ def download_testcases_excel_by_category(request):
 
     # Save the workbook to the response
     workbook.save(response)
-    return response     
+    return response
     
 
 
