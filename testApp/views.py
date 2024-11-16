@@ -69,7 +69,54 @@ def load_all_test_cases(request):
     except FileNotFoundError:
         return JsonResponse({"error": "File not found"}, status=404)
     except json.JSONDecodeError:
-        return JsonResponse({"error": "Error decoding JSON data"}, status=500)    
+        return JsonResponse({"error": "Error decoding JSON data"}, status=500)   
+
+
+def download_testcases_excel_by_category(request):
+    # Create a new Excel workbook
+    workbook = openpyxl.Workbook()
+
+    # Retrieve all unique categories from the TestCase model
+    categories = TestCase.objects.values_list("category", flat=True).distinct()
+
+    # Define the headers for the Excel sheets
+    headers = ["ID", "Test Case", "Category", "Pre-condition", "Test Steps", "Test Data", "Expected Result", "Pass/Fail"]
+
+    for category in categories:
+        # Add a new worksheet for each category
+        sheet = workbook.create_sheet(title=category if category else "Uncategorized")
+
+        # Write the headers to the worksheet
+        for col_num, header in enumerate(headers, 1):
+            sheet[f"{get_column_letter(col_num)}1"] = header
+
+        # Retrieve test cases for the current category
+        test_cases = TestCase.objects.filter(category=category)
+
+        # Populate the worksheet with data from the TestCase model
+        for row_num, test_case in enumerate(test_cases, start=2):
+            sheet[f"A{row_num}"] = test_case.test_case_id
+            sheet[f"B{row_num}"] = test_case.test_case
+            sheet[f"C{row_num}"] = test_case.category
+            sheet[f"D{row_num}"] = test_case.pre_condition
+            sheet[f"E{row_num}"] = test_case.test_steps
+            sheet[f"F{row_num}"] = test_case.test_data
+            sheet[f"G{row_num}"] = test_case.expected_result
+            sheet[f"H{row_num}"] = test_case.pass_fail
+
+    # Remove the default sheet created by openpyxl if no data was added to it
+    if "Sheet" in workbook.sheetnames and len(workbook.sheetnames) > 1:
+        del workbook["Sheet"]
+
+    # Set the response with the correct content type and filename for download
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="test_cases_by_category.xlsx"'
+
+    # Save the workbook to the response
+    workbook.save(response)
+    return response     
     
 
 
@@ -80,7 +127,7 @@ def download_testcases_excel(request):
     sheet.title = "TestCases"
 
     # Define the headers based on TestCase model fields
-    headers = ["ID", "Test Case", "Pre-condition", "Test Steps", "Test Data", "Expected Result", "Pass/Fail"]
+    headers = ["ID", "Test Case", "Category", "Pre-condition", "Test Steps", "Test Data", "Expected Result", "Pass/Fail"]
     for col_num, header in enumerate(headers, 1):
         sheet[f"{get_column_letter(col_num)}1"] = header
 
@@ -91,11 +138,12 @@ def download_testcases_excel(request):
     for row_num, test_case in enumerate(test_cases, start=2):
         sheet[f"A{row_num}"] = test_case.test_case_id
         sheet[f"B{row_num}"] = test_case.test_case
-        sheet[f"C{row_num}"] = test_case.pre_condition
-        sheet[f"D{row_num}"] = test_case.test_steps
-        sheet[f"E{row_num}"] = test_case.test_data
-        sheet[f"F{row_num}"] = test_case.expected_result
-        sheet[f"G{row_num}"] = test_case.pass_fail
+        sheet[f"C{row_num}"] = test_case.category
+        sheet[f"D{row_num}"] = test_case.pre_condition
+        sheet[f"E{row_num}"] = test_case.test_steps
+        sheet[f"F{row_num}"] = test_case.test_data
+        sheet[f"G{row_num}"] = test_case.expected_result
+        sheet[f"H{row_num}"] = test_case.pass_fail
 
     # Set the response with the correct content type and filename for download
     response = HttpResponse(

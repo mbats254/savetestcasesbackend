@@ -17,6 +17,8 @@ class TestCase(models.Model):
     device = models.CharField(max_length=255, blank=True, null=True)
     pass_fail = models.CharField(max_length=10, blank=True, null=True)
     bug_status = models.CharField(max_length=255, blank=True, null=True)
+    category = models.CharField(max_length=255, blank=True, null=True)
+
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
